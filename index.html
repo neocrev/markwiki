@@ -123,6 +123,7 @@ textarea#editor::placeholder{color:#414868}
   <div class="toolbar">
     <input type="text" class="note-title" id="noteTitle" placeholder="Note title..." oninput="markDirty()">
     <div style="display:flex;gap:4px">
+      <button class="btn btn-sm" id="tocBtn" onclick="toggleTOC()" title="Table of Contents">TOC</button>
       <button class="btn btn-sm btn-danger" onclick="deleteNote()" title="Delete note">Delete</button>
     </div>
   </div>
@@ -326,22 +327,68 @@ function removeTag(tag) {
 function updatePreview() {
   const content = document.getElementById('editor').value;
   const preview = document.getElementById('preview');
+  document.getElementById('tocBtn').style.background = '';
   if (!content.trim()) {
     preview.innerHTML = '<div class="empty-preview">Preview</div>';
     return;
   }
   try {
     preview.innerHTML = typeof marked !== 'undefined' ? marked.parse(content) : '<div class="empty-preview">Loading marked.js...</div>';
-    const words = content.trim() ? content.trim().split(/\s+/).length : 0;
-    document.getElementById('wordCount').textContent = `${words} words`;
-    preview.querySelectorAll('a').forEach(a => a.setAttribute('target', '_blank'));
-  } catch(e) {
+      const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+      document.getElementById('wordCount').textContent = `${words} words`;
+      preview.querySelectorAll('a').forEach(a => a.setAttribute('target', '_blank'));
+      // Add anchor links to headings
+      preview.querySelectorAll('h1,h2,h3,h4').forEach(h => {
+        const id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        h.id = id;
+        const anchor = document.createElement('a');
+        anchor.href = '#' + id;
+        anchor.className = 'heading-anchor';
+        anchor.textContent = '#';
+        anchor.style.cssText = 'margin-left:6px;font-size:.8em;opacity:0.3;text-decoration:none;color:#7aa2f7';
+        anchor.addEventListener('mouseenter', () => anchor.style.opacity = '1');
+        anchor.addEventListener('mouseleave', () => anchor.style.opacity = '0.3');
+        h.prepend(anchor);
+      });
+    } catch(e) {
     preview.innerHTML = '<div class="empty-preview">Error rendering markdown</div>';
   }
 }
 
 function setStatus(msg) {
   document.getElementById('statusText').textContent = msg;
+}
+
+function toggleTOC() {
+  const preview = document.getElementById('preview');
+  const existing = preview.querySelector('.toc-wrap');
+  if (existing) { existing.remove(); return; }
+  const headings = preview.querySelectorAll('h1,h2,h3');
+  if (!headings.length) { setStatus('No headings found'); return; }
+  const wrap = document.createElement('div');
+  wrap.className = 'toc-wrap';
+  wrap.style.cssText = 'background:#1a1b2e;border:1px solid #24253a;border-radius:8px;padding:12px 16px;margin-bottom:16px';
+  let html = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#565f89;margin-bottom:8px">Contents</div>';
+  headings.forEach(h => {
+    const level = parseInt(h.tagName[1]);
+    const text = h.textContent.replace(/^#\s*/,'');
+    const id = h.id || text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    h.id = id;
+    html += `<div style="padding-left:${(level-1)*14}px;font-size:13px;padding:2px 0"><a href="#${id}" style="color:#7aa2f7;text-decoration:none">${text}</a></div>`;
+  });
+  wrap.innerHTML = html;
+  preview.prepend(wrap);
+  document.getElementById('tocBtn').style.background = '#32345a';
+  wrap.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const id = a.getAttribute('href').slice(1);
+      const target = document.getElementById(id);
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+    a.addEventListener('mouseenter', () => a.style.textDecoration = 'underline');
+    a.addEventListener('mouseleave', () => a.style.textDecoration = 'none');
+  });
 }
 
 function exportNotes() {
