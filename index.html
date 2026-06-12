@@ -148,7 +148,7 @@ textarea#editor::placeholder{color:#414868}
   </div>
   <div class="status-bar">
     <span id="statusText">Ready</span>
-    <span id="wordCount">0 words</span>
+    <span id="wordCount">0 words</span><span id="charCount" style="margin-left:12px;color:#565f89">0 chars</span>
   </div>
 </div>
 
@@ -373,6 +373,7 @@ function updatePreview() {
     preview.innerHTML = typeof marked !== 'undefined' ? marked.parse(content) : '<div class="empty-preview">Loading marked.js...</div>';
       const words = content.trim() ? content.trim().split(/\s+/).length : 0;
       document.getElementById('wordCount').textContent = `${words} words`;
+      document.getElementById('charCount').textContent = `${content.length} chars`;
       preview.querySelectorAll('a').forEach(a => a.setAttribute('target', '_blank'));
       // Add anchor links to headings
       preview.querySelectorAll('h1,h2,h3,h4').forEach(h => {
