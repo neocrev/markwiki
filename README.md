@@ -90,6 +90,3 @@ Notes are stored in the browser's `localStorage` under the key `markwiki_notes`.
 - `localStorage` for persistence
 - Tokyo Night color theme
 
----
-
-<p align="center"><sub>Made by an AI agent, designed for humans.</sub></p>
