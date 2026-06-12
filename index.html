@@ -31,6 +31,8 @@ a:hover{text-decoration:underline}
 .note-item .preview{font-size:12px;color:#565f89;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .note-item .meta{font-size:11px;color:#414868;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
 .note-item .meta .tag{display:inline-block;padding:0 6px;border-radius:10px;font-size:10px;background:#1f204a;color:#7aa2f7;border:1px solid #24253a}
+.note-item.pinned .title{color:#7aa2f7}
+.note-item.pinned{border-left:2px solid #7aa2f7}
 .empty-notes{padding:40px 16px;text-align:center;color:#565f89;font-size:13px}
 
 /* Toolbar */
@@ -107,6 +109,7 @@ textarea#editor::placeholder{color:#414868}
     <h1>markwiki <span class="count" id="noteCount">0</span></h1>
     <div style="display:flex;gap:4px">
       <button class="btn btn-sm" onclick="showHelp()" title="Keyboard shortcuts (?)">?</button>
+      <button class="btn btn-sm" onclick="pinNote()" id="pinBtn" title="Pin/unpin note">Pin</button>
       <button class="btn btn-sm btn-primary" onclick="newNote()" title="New note (Ctrl+N)">+</button>
     </div>
   </div>
@@ -190,7 +193,7 @@ function formatDate(ts) {
 }
 
 function newNote() {
-  const note = { id: genId(), title: 'Untitled', content: '', tags: [], created: Date.now(), updated: Date.now() };
+  const note = { id: genId(), title: 'Untitled', content: '', tags: [], created: Date.now(), updated: Date.now(), pinned: false };
   notes.unshift(note);
   saveNotes();
   currentId = note.id;
@@ -198,6 +201,18 @@ function newNote() {
   renderList();
   renderNote();
   setStatus('New note created');
+}
+
+function pinNote() {
+  if (!currentId) return;
+  const note = getNote(currentId);
+  if (!note) return;
+  note.pinned = !note.pinned;
+  note.updated = Date.now();
+  saveNotes();
+  renderList();
+  renderNote();
+  setStatus(note.pinned ? 'Note pinned' : 'Note unpinned');
 }
 
 function deleteNote() {
@@ -232,11 +247,17 @@ function renderList() {
     return;
   }
   container.innerHTML = '';
-  filtered.forEach(n => {
-    const div = el('div', 'note-item' + (n.id === currentId ? ' active' : ''));
+  const sorted = [...filtered].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    return b.updated - a.updated;
+  });
+  sorted.forEach(n => {
+    const div = el('div', 'note-item' + (n.id === currentId ? ' active' : '') + (n.pinned ? ' pinned' : ''));
     const preview = n.content.replace(/[#*`\[\]()>_-]/g, '').trim().slice(0, 60) || 'Empty';
     const tagHtml = n.tags.slice(0, 3).map(t => `<span class="tag">${t}</span>`).join('');
-    div.innerHTML = `<div class="title">${n.title}</div><div class="preview">${preview}</div><div class="meta"><span>${formatDate(n.updated)}</span>${tagHtml}</div>`;
+    const pinIcon = n.pinned ? '<span style="opacity:.4;font-size:11px">▲</span> ' : '';
+    div.innerHTML = `<div class="title">${pinIcon}${n.title}</div><div class="preview">${preview}</div><div class="meta"><span>${formatDate(n.updated)}</span>${tagHtml}</div>`;
     div.addEventListener('click', () => selectNote(n.id));
     container.append(div);
   });
@@ -291,6 +312,9 @@ function renderNote() {
   editor.value = note.content;
   renderTags(note.tags);
   updatePreview();
+  const pinBtn = document.getElementById('pinBtn');
+  if (pinBtn) pinBtn.style.background = note.pinned ? '#7aa2f7' : '';
+  if (pinBtn) pinBtn.style.color = note.pinned ? '#0f0f1a' : '';
 }
 
 function renderTags(tags) {
