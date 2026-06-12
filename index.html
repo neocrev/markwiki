@@ -261,7 +261,18 @@ function saveCurrentNote() {
   renderList();
 }
 
-function markDirty() { dirty = true; }
+function markDirty() { dirty = true; scheduleAutoSave(); }
+
+let autoSaveTimer = null;
+function scheduleAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    if (dirty && currentId) {
+      saveCurrentNote();
+      setStatus('Auto-saved ' + new Date().toLocaleTimeString());
+    }
+  }, 2000);
+}
 
 function renderNote() {
   const titleEl = document.getElementById('noteTitle');
