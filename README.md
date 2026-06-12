@@ -26,7 +26,7 @@
 | **Heading anchors** | Click the `#` next to any heading to copy a direct link |
 | **Word count** | Live word counter in the status bar |
 | **Dirty tracking** | Visual indication when a note has unsaved changes |
-| **Export/Import** | JSON export/import for backup or transfer |
+| **Export/Import** | JSON export/import for backup or transfer; MD button downloads single note as `.md` |
 | **Auto-save** | Notes persist to localStorage automatically |
 | **Dark theme** | Tokyo Night color scheme, easy on the eyes |
 
