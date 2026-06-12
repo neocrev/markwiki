@@ -127,6 +127,7 @@ textarea#editor::placeholder{color:#414868}
   <div class="toolbar">
     <input type="text" class="note-title" id="noteTitle" placeholder="Note title..." oninput="markDirty()">
     <div style="display:flex;gap:4px">
+      <button class="btn btn-sm" onclick="exportNoteMd()" title="Download as .md">MD</button>
       <button class="btn btn-sm" id="tocBtn" onclick="toggleTOC()" title="Table of Contents">TOC</button>
       <button class="btn btn-sm btn-danger" onclick="deleteNote()" title="Delete note">Delete</button>
     </div>
@@ -436,6 +437,20 @@ function exportNotes() {
   a.href = url; a.download = `markwiki_${new Date().toISOString().slice(0,10)}.json`; a.click();
   URL.revokeObjectURL(url);
   setStatus(`Exported ${notes.length} notes`);
+}
+
+function exportNoteMd() {
+  if (!currentId) { setStatus('No note selected'); return; }
+  const note = getNote(currentId);
+  if (!note) return;
+  const front = `---\ntitle: ${note.title}\ndate: ${new Date(note.updated).toISOString().slice(0,10)}\ntags: ${note.tags.join(', ')}\n---\n\n`;
+  const blob = new Blob([front + note.content], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fname = note.title.replace(/[^a-z0-9_-]/gi, '_').toLowerCase().slice(0, 40) + '.md';
+  a.href = url; a.download = fname; a.click();
+  URL.revokeObjectURL(url);
+  setStatus(`Downloaded "${fname}"`);
 }
 
 function showImport() {
